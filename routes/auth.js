@@ -4,6 +4,45 @@ const router = express.Router();
 const jwt = require('jsonwebtoken');
 const AccessCode = require('../models/AccessCode');
 
+/**
+ * @swagger
+ * tags:
+ *   name: Auth
+ *   description: auth endpoints
+ */
+
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: authenticate a user
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - accessCode
+ *             properties:
+ *               accessCode:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 token:
+ *                   type: string
+ *       400:
+ *         description: Invalid access code
+ *       500:
+ *         description: Server error
+ */
 router.post('/login', [body('accessCode').notEmpty().withMessage('Access code is required')], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

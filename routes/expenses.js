@@ -5,6 +5,72 @@ const roleCheck = require('../middleware/roleCheck');
 const Expense = require('../models/Expense');
 
 
+/**
+ * @swagger
+ * tags:
+ *   name: Expenses
+ *   description: expenses endpoints
+ */
+
+/**
+ * @swagger
+ * /api/expenses:
+ *   post:
+ *     summary: personal expenses data
+ *     tags: [Expenses]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - title
+ *               - date
+ *               - amount
+ *               - category
+ *               - description
+ *             properties:
+ *               title:
+ *                 type: string
+ *               date:
+ *                 type: string
+ *               amount:
+ *                 type: number
+ *               category:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Data retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 title:
+ *                   type: string
+ *                 date:
+ *                   type: date
+ *                 amount:
+ *                   type: number
+ *                 category:
+ *                   type: string
+ *                 description:
+ *                   type: string
+ *                 comments:
+ *                   type: string
+ *                 isPrivate:
+ *                   type: boolean
+ *                 visibleTo:
+ *                   type: string
+ *       400:
+ *         description: Invalid data
+ *       500:
+ *         description: Server error
+ */
+
 // Get all expenses (admin and family)
 router.get('/', auth, roleCheck(['admin', 'family']), async (req, res) => {
     try {

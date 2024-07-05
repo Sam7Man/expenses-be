@@ -4,6 +4,54 @@ const auth = require('../middleware/Auth');
 const roleCheck = require('../middleware/roleCheck');
 const Request = require('../models/Request');
 
+
+/**
+ * @swagger
+ * tags:
+ *   name: Request
+ *   description: requests endpoints
+ */
+
+/**
+ * @swagger
+ * /api/requests:
+ *   post:
+ *     summary: request access
+ *     tags: [Request]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - requestedRole
+ *             properties:
+ *               name:
+ *                 type: string
+ *               requestedRole:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Access request has been submitted, please wait for the Admin to approve your request.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 name:
+ *                   type: string
+ *                 requestedRole:
+ *                   type: string
+ *                 status:
+ *                   type: string
+ *       400:
+ *         description: Invalid data
+ *       500:
+ *         description: Server error
+ */
+
 // Create new request (public)
 router.post('/', async (req, res) => {
     const request = new Request({

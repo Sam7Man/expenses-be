@@ -5,6 +5,60 @@ const roleCheck = require('../middleware/roleCheck');
 const AccessCode = require('../models/AccessCode');
 
 
+/**
+ * @swagger
+ * tags:
+ *   name: Access Code
+ *   description: access-codes endpoints
+ */
+
+/**
+ * @swagger
+ * /api/access-codes:
+ *   post:
+ *     summary: access code to view dashboard
+ *     tags: [Access Code]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - code
+ *               - role
+ *             properties:
+ *               code:
+ *                 type: string
+ *               role:
+ *                 type: string
+ * 
+ *     responses:
+ *       200:
+ *         description: Data retrieved
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 name:
+ *                   type: string
+ *                 code:
+ *                   type: string
+ *                 role:
+ *                   type: string
+ *                 validUntil:
+ *                   type: string
+ *                 isActive:
+ *                   type: boolean
+ *                 lastLogin:
+ *                   type: string
+ *       400:
+ *         description: Invalid code
+ *       500:
+ *         description: Server error
+ */
+
 // Create new access code (admin only)
 router.post('/', auth, roleCheck(['admin']), async (req, res) => {
     const accessCode = new AccessCode({
