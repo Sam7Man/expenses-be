@@ -246,7 +246,7 @@ router.get('/banned', auth, roleCheck(['admin']), async (req, res) => {
 
 /**
  * @swagger
- * /account/account/ban/:id:
+ * /account/ban/:id:
  *   put:
  *     summary: Ban an account (admin only)
  *     tags: [Account]
