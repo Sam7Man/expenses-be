@@ -30,11 +30,19 @@ const options = {
             },
         ],
     },
-    apis: [path.resolve(__dirname, '../routes/*.js')],
+    apis: [path.resolve(__dirname, './routes/*.js')],
 };
 
 module.exports = (app) => {
     const specs = swaggerJsdoc(options);
+    
+    // Serve Swagger JSON
+    app.get('/api/swagger.json', (req, res) => {
+        res.setHeader('Content-Type', 'application/json');
+        res.send(specs);
+    });
+
+    // Serve Swagger UI
     app.use('/api/docs', swaggerUi.serve);
-    app.get('/api/docs', swaggerUi.setup(specs, { explorer: true }));
+    app.get('/api/docs', swaggerUi.setup(null, { swaggerOptions: { url: '/api/swagger.json' } }));
 };

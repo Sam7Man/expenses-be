@@ -7,7 +7,6 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 
-
 // Initialize Express app
 const app = express();
 const PORT = process.env.PORT;
@@ -17,22 +16,24 @@ app.use(helmet());
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 50 // limit each IP to 100 requests per windowMs
+    max: 50 // limit each IP to 50 requests per windowMs
 });
 app.use(limiter);
 
-app.use(cors());
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(', ') : [];
 const corsOptions = {
-    origin: process.env.ALLOWED_ORIGINS.split(', '),
+    origin: allowedOrigins,
     optionsSuccessStatus: 200
 };
-
 app.use(cors(corsOptions));
 
 app.use(express.json());
 
 // Connect to database
 connectDB();
+
+// Serve static assets for Swagger UI
+app.use('/api/docs', express.static(path.join(__dirname, 'node_modules/swagger-ui-dist')));
 
 // Routes
 app.use('/api/account', require('./routes/accounts'));
@@ -46,6 +47,8 @@ app.use('/api/requests', require('./routes/requests'));
 
 app.use('/api/session', require('./routes/sessions'));
 app.use('/api/sessions', require('./routes/sessions'));
+
+// Swagger setup
 swaggerSetup(app);
 
 // Global error handler
