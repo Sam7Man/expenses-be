@@ -12,7 +12,7 @@ const options = {
         },
         servers: [
             {
-                url: '/', // Change the URL to match Vercel's deployment
+                url: 'https://personal-expenses-samman.vercel.app', // Change the URL to match Vercel's deployment
             },
         ],
         components: {
