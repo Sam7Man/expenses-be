@@ -12,7 +12,7 @@ const options = {
         },
         servers: [
             {
-                url: '/api',
+                url: '/', // Change the URL to match Vercel's deployment
             },
         ],
         components: {
@@ -35,6 +35,5 @@ const options = {
 
 module.exports = (app) => {
     const specs = swaggerJsdoc(options);
-    app.use('/api/docs', swaggerUi.serve);
-    app.get('/api/docs', swaggerUi.setup(specs));
+    app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(specs));
 };

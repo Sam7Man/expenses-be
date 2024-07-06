@@ -16,16 +16,16 @@ app.use(helmet());
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100 // limit each IP to 100 requests per windowMs
+    max: 50 // limit each IP to 50 requests per windowMs
 });
 app.use(limiter);
 
 app.use(cors());
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(', ') : [];
 const corsOptions = {
-    origin: process.env.ALLOWED_ORIGINS.split(', '),
+    origin: allowedOrigins,
     optionsSuccessStatus: 200
 };
-
 app.use(cors(corsOptions));
 
 app.use(express.json());
@@ -45,12 +45,12 @@ app.use('/api/requests', require('./routes/requests'));
 
 app.use('/api/session', require('./routes/sessions'));
 app.use('/api/sessions', require('./routes/sessions'));
+
+// Swagger setup
 swaggerSetup(app);
 
 // Global error handler
 app.use((err, req, res, next) => {
-    // console.error(err.stack);
-    // res.status(500).send('Something broke!');
     console.error(err.stack);
     const status = err.status || 500;
     const message = err.message || 'Something went wrong!';
@@ -62,7 +62,10 @@ app.use((err, req, res, next) => {
     });
 });
 
-// Start the server
+// Export the app for testing (optional)
+module.exports = app;
+
+// Start the server (dev)
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
