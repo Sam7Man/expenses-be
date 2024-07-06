@@ -5,6 +5,5 @@
         {"src": "/(.*)", "dest": "server.js"},
         { "src": "/api/.*", "dest": "server.js" },
         { "src": "/api/docs/(.*)", "dest": "/api/docs" }
-    ],
-    "static": {"exclude": ["**/swagger-initializer.js"]}
+    ]
 }

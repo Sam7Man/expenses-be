@@ -34,7 +34,7 @@ const options = {
 };
 
 module.exports = (app) => {
-    const specs = swaggerJsdoc(options);
+    const specs = swaggerJsdoc(options);    
     
     // Serve Swagger JSON
     app.get('/api/swagger.json', (req, res) => {
@@ -44,5 +44,6 @@ module.exports = (app) => {
 
     // Serve Swagger UI
     app.use('/api/docs', swaggerUi.serve);
-    app.get('/api/docs', swaggerUi.setup(null, { swaggerOptions: { url: '/api/swagger.json' } }));
+    app.get('/api/docs', swaggerUi.setup(null, { explorer: true, swaggerOptions: { url: '/api/swagger.json' }}));
+    // app.get('/api/docs', swaggerUi.setup(null, { explorer: true, swaggerOptions: { url: '/api/swagger.json' }}));
 };
