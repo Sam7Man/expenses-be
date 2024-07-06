@@ -34,9 +34,6 @@ app.use(express.json());
 // Connect to database
 connectDB();
 
-// Serve static files for Swagger UI (optional)
-// app.use('/api/docs', express.static(path.join(__dirname, 'node_modules/swagger-ui-dist')));
-
 // Routes
 app.use('/api/account', require('./routes/accounts'));
 app.use('/api/accounts', require('./routes/accounts'));

@@ -4,7 +4,7 @@ const path = require('path');
 
 const options = {
     definition: {
-        openapi: '3.0.0',
+        openapi: '3.1.0',
         info: {
             title: 'Personal Expenses API',
             version: '1.0.0',
@@ -30,11 +30,11 @@ const options = {
             },
         ],
     },
-    apis: [path.resolve(__dirname, './routes/*.js')],
+    apis: [path.resolve(__dirname, '../routes/*.js')],
 };
 
 module.exports = (app) => {
     const specs = swaggerJsdoc(options);
     app.use('/api/docs', swaggerUi.serve);
-    app.get('/api/docs', swaggerUi.setup(specs));
+    app.get('/api/docs', swaggerUi.setup(specs, { explorer: true }));
 };

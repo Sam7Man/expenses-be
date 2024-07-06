@@ -71,7 +71,7 @@ router.get('/', auth, roleCheck(['admin', 'family', 'viewer']), async (req, res)
     try {
         const query = {
             isPrivate: false,
-            visibleTo: { $in: req.user.roles }, // Only fetch expenses visible to the user's roles
+            visibleTo: { $in: req.user.role },
         };
         const expenses = await Expense.find(query);
         res.json(expenses);
