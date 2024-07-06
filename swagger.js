@@ -12,7 +12,7 @@ const options = {
         },
         servers: [
             {
-                url: '/api', // Adjusted to match Express.js routes base path
+                url: '/api',
             },
         ],
         components: {
@@ -35,11 +35,6 @@ const options = {
 
 module.exports = (app) => {
     const specs = swaggerJsdoc(options);
-    app.get('/api/swagger.json', (req, res) => {
-        res.setHeader('Content-Type', 'application/json');
-        res.send(specs);
-    });
-
     app.use('/api/docs', swaggerUi.serve);
-    app.get('/api/docs', swaggerUi.setup(null, { swaggerOptions: { url: '/api/swagger.json' } }));
+    app.get('/api/docs', swaggerUi.setup(specs));
 };
