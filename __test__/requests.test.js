@@ -1,7 +1,7 @@
 const request = require('supertest');
 const app = require('../server');
 const jwt = require('jsonwebtoken');
-const AccessCode = require('../models/AccessCode');
+const Account = require('../models/Account');
 const Request = require('../models/Request');
 
 describe('Requests Endpoints', () => {
@@ -9,25 +9,25 @@ describe('Requests Endpoints', () => {
     let nonAdminToken;
 
     beforeEach(async () => {
-        await AccessCode.deleteMany({});
+        await Account.deleteMany({});
         await Request.deleteMany({});
 
         // Create admin access code and generate token
-        const adminAccessCode = new AccessCode({
+        const adminAccount =  new Account({
             code: 'admincode',
             role: 'admin',
             isActive: true,
         });
-        await adminAccessCode.save();
+        await adminAccount.save();
         adminToken = jwt.sign({ user: { role: 'admin' } }, process.env.JWT_SECRET);
 
         // Create non-admin access code and generate token
-        const nonAdminAccessCode = new AccessCode({
+        const nonAdminAccount =  new Account({
             code: 'nonadmincode',
             role: 'viewer',
             isActive: true,
         });
-        await nonAdminAccessCode.save();
+        await nonAdminAccount.save();
         nonAdminToken = jwt.sign({ user: { role: 'viewer' } }, process.env.JWT_SECRET);
     });
 
