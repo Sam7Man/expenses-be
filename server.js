@@ -5,11 +5,11 @@ const connectDB = require('./config/database');
 const swaggerSetup = require('./swagger');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-
+const path = require('path');
 
 // Initialize Express app
 const app = express();
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 3000; // Ensure PORT fallback if not provided in .env
 
 // Middleware
 app.use(helmet());
@@ -20,7 +20,6 @@ const limiter = rateLimit({
 });
 app.use(limiter);
 
-app.use(cors());
 const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(', ') : [];
 const corsOptions = {
     origin: allowedOrigins,
@@ -32,6 +31,9 @@ app.use(express.json());
 
 // Connect to database
 connectDB();
+
+// Serve static files for Swagger UI
+app.use('/api/docs', express.static(path.join(__dirname, 'node_modules/swagger-ui-dist')));
 
 // Routes
 app.use('/api/account', require('./routes/accounts'));
@@ -65,7 +67,9 @@ app.use((err, req, res, next) => {
 // Export the app for testing (optional)
 module.exports = app;
 
-// Start the server (dev)
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+// Start the server (dev or production)
+if (process.env.NODE_ENV !== 'test') {
+    app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+    });
+}

@@ -12,7 +12,7 @@ const options = {
         },
         servers: [
             {
-                url: 'https://personal-expenses-samman.vercel.app', // Change the URL to match Vercel's deployment
+                url: '/api', // Adjusted to match the routes base path
             },
         ],
         components: {
@@ -35,5 +35,6 @@ const options = {
 
 module.exports = (app) => {
     const specs = swaggerJsdoc(options);
-    app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(specs));
+    app.use('/api/docs', swaggerUi.serve);
+    app.get('/api/docs', swaggerUi.setup(specs, { explorer: true })); // Ensure explorer is enabled
 };
