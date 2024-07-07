@@ -5,7 +5,6 @@ const connectDB = require('./config/database');
 const swaggerSetup = require('./swagger');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
-const path = require('path');
 
 // Initialize Express app
 const app = express();
@@ -32,8 +31,8 @@ app.use(express.json());
 // Connect to database
 connectDB();
 
-// Serve Swagger UI static files
-app.use('/api/docs', express.static(path.join(__dirname, 'swagger-ui-custom')));
+// Setup Swagger
+swaggerSetup(app);
 
 // Routes
 app.use('/api/account', require('./routes/accounts'));
@@ -47,9 +46,6 @@ app.use('/api/requests', require('./routes/requests'));
 
 app.use('/api/session', require('./routes/sessions'));
 app.use('/api/sessions', require('./routes/sessions'));
-
-// Swagger setup
-swaggerSetup(app);
 
 // Global error handler
 app.use((err, req, res, next) => {
