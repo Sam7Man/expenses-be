@@ -22,8 +22,6 @@ const Request = require('../models/Request');
  *           type: string
  *         requestedRole:
  *           type: string
- *         status:
- *           type: string
  */
 
 /**
