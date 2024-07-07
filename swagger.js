@@ -51,7 +51,26 @@ const setupSwagger = (app) => {
         explorer: true,
         swaggerOptions: {
             url: '/api/swagger.json',
-            validatorUrl: null
+            validatorUrl: null,
+            persistAuthorization: true,
+            requestInterceptor: (req) => {
+                const token = localStorage.getItem('swagger-auth-token');
+                if (token) {
+                    req.headers.Authorization = `Bearer ${token}`;
+                }
+                return req;
+            },
+            onComplete: () => {
+                const authBtn = document.querySelector('.authorize__btn');
+                authBtn.addEventListener('click', () => {
+                    const authForm = document.querySelector('.auth-container');
+                    const submitBtn = authForm.querySelector('.modal-ux-footer .btn-done');
+                    submitBtn.addEventListener('click', () => {
+                        const tokenInput = authForm.querySelector('input[type="text"]');
+                        localStorage.setItem('swagger-auth-token', tokenInput.value);
+                    });
+                });
+            }
         },
     }));
 

@@ -16,7 +16,7 @@ app.use(helmet());
 
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 50, // limit each IP to 50 requests per windowMs
+    max: 100, // limit each IP requests per windowMs (15min)
 });
 app.use(limiter);
 
@@ -33,7 +33,8 @@ app.use(express.json());
 connectDB();
 
 // Trust proxy setting
-app.set('trust proxy', true);
+// app.set('trust proxy', true);
+app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
 
 // Setup Swagger
 swaggerSetup(app);
