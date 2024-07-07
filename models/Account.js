@@ -10,6 +10,7 @@ const AccountSchema = new mongoose.Schema({
     lastLogout: { type: Date },
     lastIpAddress: { type: String },
     logIpAddress: { type: [String] },
+    isRevoked: { type: Boolean, default: false },
     isBanned: { type: Boolean, default: false },
 }, { timestamps: { createdAt: 'createdAt', updatedAt: 'updatedAt' } });
 

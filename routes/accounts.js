@@ -41,6 +41,8 @@ const Session = require('../models/Session');
  *         logIpAddress:
  *           type: string
  *           format: array
+ *         isRevoked:
+ *           type: boolean
  *         isBanned:
  *           type: boolean
  *         createdAt:
@@ -211,15 +213,142 @@ router.delete('/:id', auth, roleCheck(['admin']), async (req, res) => {
 
 /**
  * @swagger
- * /account/banned:
+ * /accounts/revoked:
  *   get:
- *     summary: Get all banned users (admin only)
+ *     summary: Get all revoked accounts (admin only)
  *     tags: [Account]
  *     security:
  *       - BearerAuth: []
  *     responses:
  *       200:
- *         description: Successfully retrieved banned users
+ *         description: Successfully retrieved revoked accounts
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Account'
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ *       500:
+ *         description: Server error
+ */
+router.get('/revoked', auth, roleCheck(['admin']), async (req, res) => {
+    try {
+        const revokedAccounts = await Account.find({ isRevoked: true });
+        res.json(revokedAccounts);
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+
+/**
+ * @swagger
+ * /account/revoke/:id:
+ *   put:
+ *     summary: Revoke an account (admin only)
+ *     tags: [Account]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the account to revoke
+ *     responses:
+ *       200:
+ *         description: Account revoked successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Account not found
+ *       500:
+ *         description: Server error
+ */
+router.put('/revoke/:id', auth, roleCheck(['admin']), async (req, res) => {
+    try {
+        const accountId = req.params.id;
+        const account = await Account.findById(accountId);
+
+        if (!account) {
+            return res.status(404).json({ message: 'Account not found' });
+        }
+
+        // Set account status to revoked
+        account.isRevoked = true;
+        await account.save();
+
+        res.json({ message: 'Account revoked successfully' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+
+/**
+ * @swagger
+ * /account/unrevoke/:id:
+ *   put:
+ *     summary: Unrevoke an account (admin only)
+ *     tags: [Account]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the account to unrevoke
+ *     responses:
+ *       200:
+ *         description: Account unrevoked successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Account not found
+ *       500:
+ *         description: Server error
+ */
+router.put('/unrevoke/:id', auth, roleCheck(['admin']), async (req, res) => {
+    try {
+        const accountId = req.params.id;
+        const account = await Account.findById(accountId);
+
+        if (!account) {
+            return res.status(404).json({ message: 'Account not found' });
+        }
+
+        // Remove revoke status from account
+        account.isRevoked = false;
+        await account.save();
+
+        res.json({ message: 'Account unrevoked successfully' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+
+/**
+ * @swagger
+ * /accounts/banned:
+ *   get:
+ *     summary: Get all banned accounts (admin only)
+ *     tags: [Account]
+ *     security:
+ *       - BearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved banned accounts
  *         content:
  *           application/json:
  *             schema:
@@ -235,8 +364,8 @@ router.delete('/:id', auth, roleCheck(['admin']), async (req, res) => {
  */
 router.get('/banned', auth, roleCheck(['admin']), async (req, res) => {
     try {
-        const bannedUsers = await Account.find({ isBanned: true });
-        res.json(bannedUsers);
+        const bannedAccounts = await Account.find({ isBanned: true });
+        res.json(bannedAccounts);
     } catch (err) {
         console.error(err.message);
         res.status(500).send('Server error');
@@ -280,10 +409,61 @@ router.put('/ban/:id', auth, roleCheck(['admin']), async (req, res) => {
 
         // Set account status to banned
         account.isBanned = true;
+        account.isActive = false;
         await account.save();
 
         // Also revoke all sessions associated with this account
         await Session.updateMany({ userId: accountId }, { banned: true });
+
+        res.json({ message: 'Account banned successfully' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).send('Server error');
+    }
+});
+
+
+/**
+ * @swagger
+ * /account/unban/:id:
+ *   put:
+ *     summary: Unban an account (admin only)
+ *     tags: [Account]
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the account to unban
+ *     responses:
+ *       200:
+ *         description: Account unbanned successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Account not found
+ *       500:
+ *         description: Server error
+ */
+router.put('/unban/:id', auth, roleCheck(['admin']), async (req, res) => {
+    try {
+        const accountId = req.params.id;
+        const account = await Account.findById(accountId);
+
+        if (!account) {
+            return res.status(404).json({ message: 'Account not found' });
+        }
+
+        // Set account status to banned
+        account.isBanned = false;
+        account.isActive = true;
+        await account.save();
+
+        // Also unrevoke all sessions associated with this account
+        await Session.updateMany({ userId: accountId }, { banned: false });
 
         res.json({ message: 'Account banned successfully' });
     } catch (err) {

@@ -42,13 +42,18 @@ module.exports = async (req, res, next) => {
         const session = await Session.findOne({ userId: user.id, token });
 
         if (!session || session.revoked || session.banned) {
-            return res.status(401).json({ message: 'Session revoked or user banned' });
+            return res.status(401).json({ message: 'Session revoked or banned' });
         }
 
         // Fetch Account to check role and update lastIpAddress
         const account = await Account.findById(user.id);
         if (!account) {
             return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check if account is revoked or banned
+        if (account.isRevoked || account.isBanned) {
+            return res.status(403).json({ message: 'Account is revoked or banned' });
         }
 
         // Check if the token has expired or is invalid for other reasons

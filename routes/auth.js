@@ -16,9 +16,9 @@ const Session = require('../models/Session');
  *     Auth:
  *       type: object
  *       required:
- *         - account
+ *         - code
  *       properties:
- *         account:
+ *         code:
  *           type: string
  */
 
@@ -46,18 +46,22 @@ const Session = require('../models/Session');
  *       500:
  *         description: Server error
  */
-router.post('/login', [body('account').notEmpty().withMessage('Account code is required')], async (req, res) => {
+router.post('/login', [body('code').notEmpty().withMessage('Account code is required')], async (req, res) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         return res.status(400).json({ errors: errors.array() });
     }
 
     try {
-        const { account } = req.body;
-        const foundCode = await Account.findOne({ code: account, isActive: true });
+        const { code } = req.body;
+        const foundCode = await Account.findOne({ code: code, isActive: true });
 
         if (!foundCode) {
             return res.status(400).json({ message: 'Invalid access code' });
+        }
+
+        if (foundCode.isRevoked || foundCode.isBanned) {
+            return res.status(403).json({ message: 'Account is revoked or banned' });
         }
 
         if (foundCode.validUntil && new Date() > foundCode.validUntil) {
@@ -87,20 +91,13 @@ router.post('/login', [body('account').notEmpty().withMessage('Account code is r
             });
             await session.save();
 
-            res.json({ token });
+            res.status(200).json({ token });
         });
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
+        res.status(500).json({ message: err.message });
     }
 });
 
-/**
- * @swagger
- * tags:
- *   name: Auth
- *   description: auth endpoints
- */
 
 /**
  * @swagger
@@ -117,37 +114,29 @@ router.post('/login', [body('account').notEmpty().withMessage('Account code is r
  *         description: Server error
  */
 router.post('/logout', async (req, res) => {
+    const authHeader = req.header('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ message: 'Authorization denied' });
+    }
+
+    const token = authHeader.split(' ')[1];
+
     try {
-        const authHeader = req.header('Authorization');
-        if (!authHeader || !authHeader.startsWith('Bearer ')) {
-            return res.status(401).json({ message: 'Authorization denied' });
-        }
-
-        // Extract token from Authorization header
-        const token = authHeader.split(' ')[1];
-
-        // Decode token to get user information
-        const decoded = jwt.decode(token);
-
-        if (!decoded) {
-            return res.status(401).json({ message: 'Invalid token' });
-        }
-
-        const session = await Session.findOne({ userId: decoded.user._id, token });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const session = await Session.findOne({ userId: decoded.user.id, token });
 
         if (!session) {
             return res.status(404).json({ message: 'Session not found' });
         }
 
-        // Mark session as revoked
+        // Mark the session as revoked so that the session cannot be used for login again
         session.revoked = true;
         session.revokedAt = new Date();
         await session.save();
 
-        res.json({ message: 'Logout successful' });
+        res.status(200).json({ message: 'Logged out successfully' });
     } catch (err) {
-        console.error(err.message);
-        res.status(500).send('Server error');
+        res.status(500).json({ message: err.message });
     }
 });
 
