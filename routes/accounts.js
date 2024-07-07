@@ -55,7 +55,7 @@ const Session = require('../models/Session');
 
 /**
  * @swagger
- * /account/:
+ * /account:
  *   post:
  *     summary: Create a new account (admin only)
  *     tags: [Account]
@@ -248,7 +248,7 @@ router.get('/revoked', auth, roleCheck(['admin']), async (req, res) => {
 
 /**
  * @swagger
- * /account/revoke/:id:
+ * /account/revoke/{id}:
  *   put:
  *     summary: Revoke an account (admin only)
  *     tags: [Account]
@@ -282,6 +282,7 @@ router.put('/revoke/:id', auth, roleCheck(['admin']), async (req, res) => {
 
         // Set account status to revoked
         account.isRevoked = true;
+        account.isActive = false;
         await account.save();
 
         res.json({ message: 'Account revoked successfully' });
@@ -294,7 +295,7 @@ router.put('/revoke/:id', auth, roleCheck(['admin']), async (req, res) => {
 
 /**
  * @swagger
- * /account/unrevoke/:id:
+ * /account/unrevoke/{id}:
  *   put:
  *     summary: Unrevoke an account (admin only)
  *     tags: [Account]
@@ -328,6 +329,9 @@ router.put('/unrevoke/:id', auth, roleCheck(['admin']), async (req, res) => {
 
         // Remove revoke status from account
         account.isRevoked = false;
+        if (!account.isBanned) {
+            return account.isActive = true;
+        }
         await account.save();
 
         res.json({ message: 'Account unrevoked successfully' });
@@ -375,7 +379,7 @@ router.get('/banned', auth, roleCheck(['admin']), async (req, res) => {
 
 /**
  * @swagger
- * /account/ban/:id:
+ * /account/ban/{id}:
  *   put:
  *     summary: Ban an account (admin only)
  *     tags: [Account]
@@ -409,6 +413,7 @@ router.put('/ban/:id', auth, roleCheck(['admin']), async (req, res) => {
 
         // Set account status to banned
         account.isBanned = true;
+        account.isRevoked = true;
         account.isActive = false;
         await account.save();
 
@@ -425,7 +430,7 @@ router.put('/ban/:id', auth, roleCheck(['admin']), async (req, res) => {
 
 /**
  * @swagger
- * /account/unban/:id:
+ * /account/unban/{id}:
  *   put:
  *     summary: Unban an account (admin only)
  *     tags: [Account]
@@ -459,6 +464,7 @@ router.put('/unban/:id', auth, roleCheck(['admin']), async (req, res) => {
 
         // Set account status to banned
         account.isBanned = false;
+        account.isRevoked = false;
         account.isActive = true;
         await account.save();
 

@@ -5,8 +5,8 @@ const Session = require('../models/Session');
 const Account = require('../models/Account');
 const FailedLogin = require('../models/FailedLogin');
 
-const MAX_LOGIN_ATTEMPTS = 4;
-const BLOCK_TIME = 60 * 60 * 1000; // 60 minutes in ms
+const MAX_LOGIN_ATTEMPTS = process.env.MAX_LOGIN_ATTEMPTS;
+const BLOCK_TIME = process.env.BLOCK_TIME;
 
 // # custom header
 // module.exports = (req, res, next) => {
@@ -17,7 +17,7 @@ const BLOCK_TIME = 60 * 60 * 1000; // 60 minutes in ms
 //         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 //         req.user = decoded.user;
 //         next();
-//     } catch (err) {z
+//     } catch (err) {
 //         res.status(401).json({ message: 'Token is not valid' });
 //     }
 // };
@@ -26,8 +26,34 @@ const BLOCK_TIME = 60 * 60 * 1000; // 60 minutes in ms
 // Bearer token header
 module.exports = async (req, res, next) => {
     const authHeader = req.header('Authorization');
+
+    // Check if request is a login attempt (no valid session token)
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ message: 'Authorization denied' });
+        // Track failed login attempts by IP address
+        const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        const failedAttempts = await FailedLogin.findOne({ ipAddress: clientIp });
+
+        // Check rate limit only for login attempts
+        if (failedAttempts && failedAttempts.attempts >= MAX_LOGIN_ATTEMPTS && Date.now() - failedAttempts.lastAttemptAt < BLOCK_TIME) {
+            return res.status(429).json({ message: 'Too many failed login attempts. Try again later.' });
+        }
+
+        // If attempts are allowed or block time has passed, reset attempts
+        if (!failedAttempts || Date.now() - failedAttempts.lastAttemptAt >= BLOCK_TIME) {
+            await FailedLogin.findOneAndUpdate(
+                { ipAddress: clientIp },
+                { ipAddress: clientIp, attempts: 1, lastAttemptAt: Date.now() },
+                { upsert: true }
+            );
+        } else {
+            await FailedLogin.findOneAndUpdate(
+                { ipAddress: clientIp },
+                { $inc: { attempts: 1 }, lastAttemptAt: Date.now() }
+            );
+        }
+
+        // Proceed to the next middleware
+        return next();
     }
 
     // Extract token from Authorization header
@@ -61,32 +87,12 @@ module.exports = async (req, res, next) => {
             return res.status(401).json({ message: 'Session expired' });
         }
 
-        // Track failed login attempts by IP address
-        const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-        const failedAttempts = await FailedLogin.findOne({ ipAddress: clientIp });
-
-        if (failedAttempts && failedAttempts.attempts >= MAX_LOGIN_ATTEMPTS && Date.now() - failedAttempts.lastAttemptAt < BLOCK_TIME) {
-            return res.status(429).json({ message: 'Too many failed login attempts. Try again later.' });
-        }
-
-        // If attempts are allowed or block time has passed, reset attempts
-        if (!failedAttempts || Date.now() - failedAttempts.lastAttemptAt >= BLOCK_TIME) {
-            await FailedLogin.findOneAndUpdate(
-                { ipAddress: clientIp },
-                { ipAddress: clientIp, attempts: 1, lastAttemptAt: Date.now() },
-                { upsert: true }
-            );
-        } else {
-            await FailedLogin.findOneAndUpdate(
-                { ipAddress: clientIp },
-                { $inc: { attempts: 1 }, lastAttemptAt: Date.now() }
-            );
-        }
-
         // Update lastIpAddress in Account
+        const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
         account.lastIpAddress = clientIp;
         await account.save();
 
+        // Store session and user details in request for subsequent middleware/routes
         req.session = session;
         req.user = user;
         next();

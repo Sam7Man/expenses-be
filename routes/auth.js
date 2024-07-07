@@ -1,9 +1,15 @@
+require('dotenv').config();
+
 const { body, validationResult } = require('express-validator');
 const express = require('express');
 const router = express.Router();
 const jwt = require('jsonwebtoken');
 const Account = require('../models/Account');
 const Session = require('../models/Session');
+const FailedLogin = require('../models/FailedLogin');
+
+const MAX_LOGIN_ATTEMPTS = process.env.MAX_LOGIN_ATTEMPTS;
+const BLOCK_TIME = process.env.BLOCK_TIME;
 
 /**
  * @swagger
@@ -57,6 +63,19 @@ router.post('/login', [body('code').notEmpty().withMessage('Account code is requ
         const foundCode = await Account.findOne({ code: code, isActive: true });
 
         if (!foundCode) {
+            // Increment failed login attempts for IP address
+            const clientIp = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+            const failedAttempts = await FailedLogin.findOneAndUpdate(
+                { ipAddress: clientIp },
+                { $inc: { attempts: 1 }, lastAttemptAt: Date.now() },
+                { upsert: true, new: true }
+            );
+
+            // Check if attempts exceed limit and respond accordingly
+            if (failedAttempts && failedAttempts.attempts >= MAX_LOGIN_ATTEMPTS && Date.now() - failedAttempts.lastAttemptAt < BLOCK_TIME) {
+                return res.status(429).json({ message: 'Too many failed login attempts. Try again later.' });
+            }
+
             return res.status(400).json({ message: 'Invalid access code' });
         }
 
