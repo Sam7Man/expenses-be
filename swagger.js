@@ -1,6 +1,7 @@
 const swaggerJsdoc = require('swagger-jsdoc');
 const swaggerUi = require('swagger-ui-express');
 const path = require('path');
+const express = require('express');
 
 const options = {
     definition: {
@@ -30,11 +31,6 @@ const options = {
             },
         ],
     },
-    customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui.css',
-    customJsUrl: [
-        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui-bundle.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui-standalone-preset.js'
-    ],
     apis: [path.resolve(__dirname, './routes/*.js')],
 };
 
@@ -48,7 +44,8 @@ const setupSwagger = (app) => {
         res.send(specs);
     });
 
-    // Serve Swagger UI using CDN
+    // Serve Swagger UI using locally hosted assets
+    const swaggerUiAssetsPath = path.join(__dirname, './public/swagger');
     app.use('/api/docs', swaggerUi.serve);
     app.get('/api/docs', swaggerUi.setup(null, {
         explorer: true,
@@ -56,12 +53,13 @@ const setupSwagger = (app) => {
             url: '/api/swagger.json',
             validatorUrl: null
         },
-        customCssUrl: 'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui.css',
-        customJsUrl: [
-            'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui-bundle.js',
-            'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.17.14/swagger-ui-standalone-preset.js'
-        ],
     }));
+
+    // Serve Swagger UI statically
+    app.use('/api/docs', express.static(swaggerUiAssetsPath));
+
+    // or serve index.html with Swagger UI directly
+    // app.get('/api/docs', express.static(path.join(swaggerUiAssetsPath, 'index.html')));
 };
 
 module.exports = setupSwagger;
