@@ -40,10 +40,13 @@ npm install
 ```
 
 * Set up environment variables:
+
 Run this command to create `.env` file :
+
 ```
 cp .env.example .env
 ```
+
 or create new `.env` file by running this command:
 ```
 touch .env
@@ -51,7 +54,9 @@ touch .env
 Customize the existing `.env` file as needed.
 
 * User creation:
+
 Create default user by running this command:
+
 ```
 npm run createUser
 ```
